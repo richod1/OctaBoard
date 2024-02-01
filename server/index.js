@@ -5,6 +5,7 @@ const cookieParser=require("cookie-parser")
 const cors=require("cors")
 const morgan=require("morgan")
 require("dotenv").config()
+const {connect}=require("./Database")
 const corsConfig={
     credentials:true,
     origin:true,
@@ -15,6 +16,9 @@ app.use(express.json())
 app.use(morgan('tiny'))
 app.disable('x-powered-by')
 app.use(cookieParser())
+
+// database connection
+connect();
 
 app.use((err,req,res,next)=>{
     const status=err.status||500;
