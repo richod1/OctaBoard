@@ -117,10 +117,37 @@ const getWorks=async (req,res,next)=>{
     }
 }
 
+const getTasks=async(req,res,next)=>{
+    try{
+
+        const user=await UserModel.findById(req.user.id).populate({
+            path:"tasks",
+            populate:{
+                path:"members",
+                select:"name img",
+            }
+        }).sort({end_date:1});
+        if(!user) return next(createError(404,"User not found"));
+
+        const tasksArray=[];
+        await Promise.all(
+            user.tasksArray.map(async (task)=>{
+                tasksArray.push(task)
+            }).then(()=>{
+                res.status(200).json(tasksArray);
+            })
+        )
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     findUser,
     update,
     deleteUser,
     getUser,
     getNotification,
+    getWorks,
 }
