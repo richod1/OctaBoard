@@ -174,6 +174,72 @@ const unsubscribe=async(req,res,next)=>{
     }
 }
 
+// fincding project id from user and get it from projects collections
+const getUserProjects=async(req,res,next)=>{
+    try{
+        const user=await UserModel.findById(req.user.id).populate("projects");
+
+        const projects=[];
+        await Promise.all(user.projects.map(async(project)=>{
+            projects.push(project)
+        })).catch((err)=>{
+            next(err)
+        }).then(()=>{
+            res.status(200).json(projects)
+        }).catch((err)=>{
+            next(err)
+        })
+        // tried to avoid promise chain hell;
+
+    }catch(err){
+        next(err)
+    }
+}
+
+const getUserTeams=async(req,res,next)=>{
+    try{
+
+        const user=await UserModel.findById(req.user.id).populate("teams");
+        const teams=[];
+
+        await Promise.all(user.teams.map(async(team)=>{
+            await TeamsModel.findById(team.id).then((team)=>{
+                teams.push(team)
+            }).catch((err)=>{
+                next(err);
+            })
+        })).then(()=>{
+            res.status(200).json(teams)
+        }).catch((err)=>{
+            next(err)
+        })
+
+    }catch(err){
+        next(err)
+    }
+}
+
+const findUserByEmail=async(req,res,next)=>{
+    const email=req.params.email;
+    const users=[];
+    try{
+        await UserModel.findOne({email:{$regex:email,$options:"1"}}).then((user)=>{
+            if(user !=null){
+                users.push(user);
+                res.status(200).json(users)
+            }else{
+                res.status(201).json({message:"User not found!"})
+            }
+        }).catch((err)=>{
+            next(err)
+        })
+        
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     findUser,
     update,
@@ -184,4 +250,7 @@ module.exports={
     getTasks,
     subscribe,
     unsubscribe,
+    getUserProjects,
+    getUserTeams,
+    findUserByEmail,
 }
