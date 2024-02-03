@@ -137,9 +137,40 @@ const getTasks=async(req,res,next)=>{
                 res.status(200).json(tasksArray);
             })
         )
+    }catch(err){
+        next(err)
+    }
+}
+
+const subscribe=async(req,res,next)=>{
+    try{
+        await UserModel.findByIdAndUpdate(req.user.id,{
+            $push:{subscribedUsers:req.params.id}
+        });
+
+        await UserModel.findByIdAndUpdate(req.params.id,{
+            $inc:{subscribers:1}
+        });
+
+        res.status(200).json("Subscription successfully!")
 
     }catch(err){
         next(err)
+    }
+}
+
+const unsubscribe=async(req,res,next)=>{
+    try{
+        await UserModel.findByIdAndUpdate(req.params.id,{
+            $pull:{subscibeUsers:req.params.id}
+        });
+        await UserModel.findByIdAndUpdate(req.params.id,{
+            $inc:{subscribers:-1}
+        })
+        res.status(200).json("Unsubscription Successfully")
+
+    }catch(err){
+        next(err);
     }
 }
 
@@ -150,4 +181,7 @@ module.exports={
     getUser,
     getNotification,
     getWorks,
+    getTasks,
+    subscribe,
+    unsubscribe,
 }
