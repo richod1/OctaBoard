@@ -181,14 +181,16 @@ const getUserProjects=async(req,res,next)=>{
 
         const projects=[];
         await Promise.all(user.projects.map(async(project)=>{
-            projects.push(project)
-        })).catch((err)=>{
-            next(err)
-        }).then(()=>{
+            await Projects.findById(project).populate("members.id","_id name email img").then((project)=>{
+                projects.push(project)
+            }).catch((err) => {
+                next(err)
+            })
+            })).then(() => {
             res.status(200).json(projects)
-        }).catch((err)=>{
+            }).catch((err) => {
             next(err)
-        })
+            })
         // tried to avoid promise chain hell;
 
     }catch(err){
