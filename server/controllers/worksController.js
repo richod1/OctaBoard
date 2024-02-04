@@ -3,6 +3,8 @@ const jwt=require("jsonwebtoken")
 const {createError}=require("../error.js")
 const workModel=require("../models/Works")
 const mongoose=require("mongoose")
+const ProjectModel=require("../models/project")
+const bcrypt=require("bcrypt")
 
 
 const addWork=async(req,res,next)=>{
@@ -29,6 +31,34 @@ const addWork=async(req,res,next)=>{
     }
 }
 
+const deleteProject=async(req,res,next)=>{
+    try{
+        const project=await ProjectModel.findById(req.params.id);
+
+        if(!project) return next(createError(404,"Project not found!"));
+        for(let i=0;i<project.members.length;i++){
+            if(project.members[i]===req.user.id){
+                if(project.members[i].access==="Owner"){
+                    await project.delete();
+
+                    UserModel.findByIdAndUpdate(req.user.id,{$pull:{projects:req.params.id}},{new:true},(err,doc)=>{
+                        if(err){
+                            next(err)
+                        }
+                    });
+                    res.status(200).json("Project has been deleted...");
+                }else{
+                    return next(createError(404,"You are not allowed to delete this project!"))
+                }
+            }
+        }
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addWork,
+    deleteProject,
 }
