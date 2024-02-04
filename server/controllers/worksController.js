@@ -58,7 +58,36 @@ const deleteProject=async(req,res,next)=>{
     }
 }
 
+const getProject=async(req,res,next)=>{
+    try{
+        const project=await ProjectModel.findById(req.params.id);
+        const members=[];
+        var verified=false
+        await Promise.all(project.members.map(async(Member)=>{
+            console.log(Member.id)
+            if(Member.id===req.user.id){
+                verified=true
+            }
+
+            await UserModel.findById(Member.id).then((member)=>{
+                console.log(member)
+                members.push({id:member.id,role:Member.role,access:Member.access,name:member.name,img:member.img,email:member.email})
+            })
+        })).then(()=>{
+            if(verified){
+                return res.status(200).json({project,members})
+            }else{
+                return next(createError(403,"You are not allowed to view this project"))
+            }
+        })
+
+    }catch(err){
+        next(err);
+    }
+}
+
 module.exports={
     addWork,
     deleteProject,
+    getProject,
 }
