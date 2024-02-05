@@ -5,6 +5,7 @@ const workModel=require("../models/Works")
 const mongoose=require("mongoose")
 const ProjectModel=require("../models/project")
 const bcrypt=require("bcrypt")
+const nodemailer=require("nodemailer")
 
 
 const addWork=async(req,res,next)=>{
@@ -112,9 +113,55 @@ const updateProject=async(req,res,next)=>{
     }
 }
 
+// mail with nodemailer
+const transporter=nodemailer.createTransport({
+    service:"gmail",
+    auth:{
+        user:process.env.GMAIL_USERNAME,
+        pass:process.env.GMAIL_PASS,
+    },
+    port:465,
+    host:'smtp.gmail.com'
+
+})
+
+const inviteProjectMember=async(req,res,next)=>{
+    const user=await UserModel.findById(req.user.id);;
+    if(!user){
+        return next(createError(404,"User not found"))
+    }
+
+    const project=await ProjectModel.findById(req.params.id);
+    if(!project){
+        return next(createError(404,"Project not found!"));
+    }
+    for(let i=0;i<project.members.length;i++){
+        if(project.members[i].id===req.user.id){
+            if(project.members[i].access==="Owner"|| project.members[i].access==="Admin"||project.members[i].access==="Editor"){
+                const mailOptions={
+                    from:process.env.Email,
+                    to:req.body.email,
+                    subject:"Project Invitation",
+                    text:`Hi ${req.body.name}, you have been invited to join project ${project.title} by ${user.name}. Please click on the link to join the project. http://localhost:3000/api/project/invite/${req.params.id}/${req.body.id}`,
+                };
+                transporter.sendMail(mailOptions,(err,data)=>{
+                    if(err){
+                        return next(err);
+                    }else{
+                        res.status(200).json({message:"Message sendt successfully"})
+                    }
+                })
+            }else{
+                return next(createError(403,"Tou are not allowed to invite members to this project!"))
+            }
+        }
+    }
+}
+
 module.exports={
     addWork,
     deleteProject,
     getProject,
     updateProject,
+    inviteProjectMember,
 }
