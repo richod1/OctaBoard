@@ -117,9 +117,42 @@ const updateProject=async(req,res,next)=>{
     }
 }
 
+const updateMembers=async(req,res,next)=>{
+    try{
+        const project=await ProjectModel.findById(req.params.id);
+        if(!project) return next(createError(404,"project not found!"))
+        for(let i=0;i<project.members.length;i++){
+            if(project.members[i].id.toString()===req.user.id.toString()){
+                if(project.members[i].access==="Owner"||project.members[i].access==="Admin"||project.members[i].access==="Editor"){
+                    const updateproject=await ProjectModel.findByIdAndUpdate(
+                        req.params.id,{
+                            $set:{
+                                "members.$[elem].access":req.body.access,
+                                "members.$[elem].role":req.body.role,
+                            }
+                        },{
+                            arrayFilters:[{"elem.id":req.body.id}],
+                            new:true,
+                        }
+                    );
+                    res.status(200).json({message:"member has been updated..."})
+                }else{
+                    return next(createError(403,"You are not allowed to update this project"))
+                }
+            }
+    }
+
+    return next(createError(403,"You can update only if you are a member of this project!"))
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addProject,
     deleteProject,
     getProject,
     updateProject,
+    updateMembers,
 }
