@@ -66,7 +66,32 @@ const deleteProject=async(req,res,next)=>{
     }
 }
 
+const getProject=async(req,res,next)=>{
+    try{
+        const project=await ProjectModel.findById(req.params.id).populate("members.id","_id name email img");
+
+        var verified=false;
+        await Promise.all(
+            project.members.map(async (Member)=>{
+                if(Member.id.id===req.user.id){
+                    verified=true
+                }
+            })
+        ).then(()=>{
+            if(verified){
+                return res.status(200).json(project)
+            }else{
+                return next(createError(403,"Ypu are not allowed to view this project"))
+            }
+        })
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addProject,
     deleteProject,
+    getProject,
 }
