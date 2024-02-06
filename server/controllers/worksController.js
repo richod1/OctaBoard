@@ -125,8 +125,10 @@ const transporter=nodemailer.createTransport({
 
 })
 
+// if nodemailer dont work i will use email.js just try me
+
 const inviteProjectMember=async(req,res,next)=>{
-    const user=await UserModel.findById(req.user.id);;
+    const user=await UserModel.findById(req.user.id);
     if(!user){
         return next(createError(404,"User not found"))
     }
@@ -158,10 +160,63 @@ const inviteProjectMember=async(req,res,next)=>{
     }
 }
 
+const verifyInvitation=async(req,res,next)=>{
+    try{
+        const project=await ProjectModel.findById(req.params.projectId);
+        if(!project) return next(createError(404,"Project not found!"));
+
+        const user=await UserModel.findById(req.params.userId);
+        if(!user){
+            return next(createError(404,"User not found"))
+        }
+
+        for(let i=0;i<project.members.length;i++){
+            if(project.members[i].id===user.id){
+                return next(createError(403,"You already a member of this project"))
+            }
+        }
+
+        const newMember={id:user.id,img:user.img,name:user.name,email:user.email,role:"d",access:"View Only"};
+        const updateProject=await ProjectModel.findByIdAndUpdate(req.params.projectId,{
+            $push:{members:newMember},
+        },{
+            new:true
+        });
+
+        UserModel.findByIdAndUpdate(user.id,{
+            $push:{projects:updateProject._id}
+        },{
+            new:true
+        },(err,doc)=>{
+            if(err){
+                next(err)
+            }
+        });
+
+        res.status(200).json(updateProject)
+
+    }catch(err){
+        next(err)
+    }
+}
+
+const getProjectMembers=async(req,res,next)=>{
+    try{
+        const project=await ProjectModel.findById(req.params.id);
+        if(!project) return next(createError(404,"Project not found"))
+        res.status(200).json(project.members)
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addWork,
     deleteProject,
     getProject,
     updateProject,
     inviteProjectMember,
+    verifyInvitation,
+    getProjectMembers,
 }
