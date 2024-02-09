@@ -130,10 +130,70 @@ const updateMembers=async(req,res,next)=>{
     }
 }
 
+const removeMember=async(req,res,next)=>{
+    try{
+        const Team=await TeamModel.findById(req.params.id);
+        if(!Team) return next(createError(404,"Teams not found!"))
+        for(let i=0;i<Team.members.length;i++){
+            console.log(Team.members.length,Team.members[i].id.toString(),req.user.id)
+            if(Team.members[i].access==="Owner"|| Team.members[i].access==="Admin"||Team.members[i].access==="Editor"){
+                await TeamModel.findByIdAndUpdate(
+                    req.params.id,{
+                        $pull:{members:{id:req.body.id}}
+                    },
+                    {
+                        new:true,
+                    }
+                ).exec();
+                await UserModel.findByIdAndUpdate(req.body.id,{$pull:{items:req.params.id}},{new:true}).exec().then(()=>{
+                    res.status(200).json({message:"Member has been removed"})
+                }).catch((err)=>{
+                    next(err)
+                })
+            }else{
+                return next(createError(403,"You are not allowed to update this team!"))
+            }
+        }
+        return next(createError(403,"You can update only if you are member of this team!"))
+
+    }catch(err){
+        next(err)
+    }
+}
+
+const addTeamProject=async(req,res,next)=>{
+    const user=await UserModel.findById(req.user.id);
+    if(!user){
+        return next(createError(404,"User not found!"))
+    }
+
+    const newProject=new ProjectModel({members:[{id:user.id,role:"d",access:"Owner"}],...req.body});
+    try{
+
+        const saveProject=await (await newProject.save());
+        UserModel.findByIdAndUpdate(user.id,{$push:{projects:saveProject._id}},{new:true},(err,doc)=>{
+            if(err){
+                next(err)
+            }
+        });
+        TeamModel.findByIdAndUpdate(req.params.id,{$push:{projects:saveProject._id}},{new:true},(err,doc)=>{
+            if(err){
+                next(err)
+            }
+        })
+        res.status(200).json(saveProject);
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addTeam,
     deleteTeam,
     getTeam,
     updateTeam,
     updateMembers,
+    removeMember,
+    addTeamProject,
 }
