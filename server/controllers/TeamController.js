@@ -78,8 +78,31 @@ const getTeam=async(req,res,next)=>{
     }
 }
 
+const updateTeam=async(req,res,next)=>{
+    try{
+        const Team=await TeamModel.findById(req.params.id);
+        if(!Team) return next(createError(404,"Team not found!"))
+        console.log(Team.members.length);
+    if(Team.members[i].id.toString()===req.user.id){
+        if(Team.members[i].access==="Owner"||Team.members[i].access==="Admin"||Team.members[i].access==="Editor"){
+            const updatedTeam=await TeamModel.findByIdAndUpdate(req.params.id,{
+                $set:req.body,
+            },{new:true})
+            res.status(200).json(updatedTeam)
+        }else{
+            return next(createError(403,"You are not allowed to update this Team!"))
+        }
+    }
+    return next(createError(403,"You can update only if you a member of this team!"))
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addTeam,
     deleteTeam,
     getTeam,
+    updateTeam,
 }
