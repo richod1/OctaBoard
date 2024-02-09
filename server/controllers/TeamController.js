@@ -259,6 +259,61 @@ export const inviteTeamMember = async (req, res, next) => {
     }
 };
 
+
+const verifyInvitation=async (req,res,next)=>{
+    try{
+        const {teamid,userid,access,role}=req.query;
+        const code=req.params.code;
+        if(code===req.app.locals.CODE){
+            req.app.locals.CODE=null;
+            req.app.locals.resetSession=true;
+
+            const team=await TeamModel.findById(teamid);
+            if(!team) return next(createError(404,"Team not found!"))
+
+            const user=await UserModel.findById(userid);
+            if(!user) return next(createError(404,"User not found!"))
+
+            for(let i=0;i<team.members.length;i++){
+                if(team.members[i].id.toString()===user.id){
+                    return next(createError(404,"Tou are already a member of this team"))
+                }
+            }
+
+            const newMember={id:user.id,role:role,access:access};
+
+            await TeamModel.findByIdAndUpdate(teamid,{
+                $push:{members:newMember}
+            },{
+                new:true
+            }).then(async ()=>{
+                await UserModel.findByIdAndUpdate(userid,{
+                    $push:{teams:team.id}
+                },{new:true})
+            }).then((result)=>{
+                res.status(200).json({message:"You have successfully joined the team!"})
+            }).catch((err)=>{
+                next(err)
+            })
+        }
+        return res.status(201).json({message:"Invalid-Link or Link expired"})
+
+    }catch(err){
+        next(err)
+    }
+}
+
+
+const getTeamMembers=async (req,res,next)=>{
+    try{
+        const team=await TeamModel.findById(req.params.id);
+        if(!team) return next(createError(404,"Team not found"))
+        res.status(200).json(ream.members)
+
+    }catch(err){
+        next(err)
+    }
+}
 module.exports={
     addTeam,
     deleteTeam,
@@ -268,4 +323,6 @@ module.exports={
     removeMember,
     addTeamProject,
     inviteTeamMember,
+    verifyInvitation,
+    getTeamMembers,
 }
