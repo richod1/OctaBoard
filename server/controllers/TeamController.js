@@ -26,7 +26,7 @@ const addTeam=async(req,res,next)=>{
     
 }
 
-const deleteReam=async(req,res,next)=>{
+const deleteTeam=async(req,res,next)=>{
     try{
         const Team=await TeamModel.findById(req.params.id);
         if(!Team) return next(createError(404,"Team not found!"))
@@ -50,6 +50,36 @@ const deleteReam=async(req,res,next)=>{
     }
 }
 
+const getTeam=async(req,res,next)=>{
+    try{
+        const team=await TeamModel.findById(req.params.id).populate("members.id","_id name email img").populate({
+            path:"projects",
+            populate:{
+                path:"members.id",
+                select:"_id name email",
+            }
+        });
+
+        var verified=false;
+
+        await Promise.all(team.members.map(async(Member)=>{
+            if(Member.id.id===req.user.id)
+            verified=true
+        })).then(()=>{
+            if(verified){
+                res.status(200).json(team)
+            }else{
+                return next(createError(403,"You are not allowed to see this team!"))
+            }
+        })
+
+    }catch(err){
+        next(err)
+    }
+}
+
 module.exports={
     addTeam,
+    deleteTeam,
+    getTeam,
 }
