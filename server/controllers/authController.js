@@ -98,6 +98,10 @@ const googleAuthSignIn=async(req,res,next)=>{
     }
 }
 
+const logout=(req,res)=>{
+    res.clearCookie("access_token").json({message:"Logged Out!"})
+}
+
 // firebase google
 const initiateGoogleLogin=(req,res)=>{
     const url=`https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=profile email`;
@@ -132,8 +136,76 @@ const handleGoogleCallback=async(req,res)=>{
 
 }
 
-const logout=(req,res)=>{
+const Googlelogout=(req,res)=>{
     res.redirect('/login')
+}
+
+const generateOTP=async(req,res)=>{
+    re.app.locals.OTP=await otpGenerator(6,{upperCaseAlphabets:false,specialChars:false,lowerCaseAlphabets:false,digits:true});
+    const {email}=req.query;
+    const {name}=req.query;
+    const {reason}=req.query;
+    const verifyOtp={
+        to:email,
+        subject:"OctaBoard Account Verification OTP",
+        html:`
+        <div style="font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDHQMmI5x5qWbOrEuJuFWkSIBQoT_fFyoKOKYqOSoIvQ&s" alt="OctaBoard Logo" style="display: block; margin: 0 auto; max-width: 200px; margin-bottom: 20px;">
+        <h1 style="font-size: 22px; font-weight: 500; color: #854CE6; text-align: center; margin-bottom: 30px;">Verify Your OctaBoard Account</h1>
+        <div style="background-color: #FFF; border: 1px solid #e5e5e5; border-radius: 5px; box-shadow: 0px 3px 6px rgba(0,0,0,0.05);">
+            <div style="background-color: #854CE6; border-top-left-radius: 5px; border-top-right-radius: 5px; padding: 20px 0;">
+                <h2 style="font-size: 28px; font-weight: 500; color: #FFF; text-align: center; margin-bottom: 10px;">Verification Code</h2>
+                <h1 style="font-size: 32px; font-weight: 500; color: #FFF; text-align: center; margin-bottom: 20px;">${req.app.locals.OTP}</h1>
+            </div>
+            <div style="padding: 30px;">
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Dear ${name},</p>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Thank you for creating a OctaBoard account. To activate your account, please enter the following verification code:</p>
+                <p style="font-size: 20px; font-weight: 500; color: #666; text-align: center; margin-bottom: 30px; color: #854CE6;">${req.app.locals.OTP}</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Please enter this code in the OctaBoard app to activate your account.</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 20px;">If you did not create a OctaBoard account, please disregard this email.</p>
+            </div>
+        </div>
+        <br>
+        <p style="font-size: 16px; color: #666; margin-bottom: 20px; text-align: center;">Best regards from,<br>The OctaBoard Developer</p>
+    </div>
+        `
+    };
+
+    const resetPassword={
+        to:email,
+        subject:"OctaBoard Rest Password Verificarion",
+        html:`
+        <div style="font-family: Poppins, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border: 1px solid #ccc; border-radius: 5px;">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDHQMmI5x5qWbOrEuJuFWkSIBQoT_fFyoKOKYqOSoIvQ&s" alt="OctaBoard Logo" style="display: block; margin: 0 auto; max-width: 200px; margin-bottom: 20px;">
+        <h1 style="font-size: 22px; font-weight: 500; color: #854CE6; text-align: center; margin-bottom: 30px;">Reset Your OctaBoard Account Password</h1>
+        <div style="background-color: #FFF; border: 1px solid #e5e5e5; border-radius: 5px; box-shadow: 0px 3px 6px rgba(0,0,0,0.05);">
+            <div style="background-color: #854CE6; border-top-left-radius: 5px; border-top-right-radius: 5px; padding: 20px 0;">
+                <h2 style="font-size: 28px; font-weight: 500; color: #FFF; text-align: center; margin-bottom: 10px;">Verification Code</h2>
+                <h1 style="font-size: 32px; font-weight: 500; color: #FFF; text-align: center; margin-bottom: 20px;">${req.app.locals.OTP}</h1>
+            </div>
+            <div style="padding: 30px;">
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Dear ${name},</p>
+                <p style="font-size: 14px; color: #666; margin-bottom: 20px;">To reset your OctaBoard account password, please enter the following verification code:</p>
+                <p style="font-size: 20px; font-weight: 500; color: #666; text-align: center; margin-bottom: 30px; color: #854CE6;">${req.app.locals.OTP}</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Please enter this code in the OctaBoard app to reset your password.</p>
+                <p style="font-size: 12px; color: #666; margin-bottom: 20px;">If you did not request a password reset, please disregard this email.</p>
+            </div>
+        </div>
+        <br>
+        <p style="font-size: 16px; color: #666; margin-bottom: 20px; text-align: center;">Best regards from,<br>The OctaBoard Developer</p>
+    </div>
+        `
+    };
+
+    if(reason==="FORGETPASSWORD"){
+        transporter.sendMail(resetPassword,(err)=>{
+            if(err){
+                next(err)
+            }else{
+                return res.status(200).send({message:"OTP sent"})
+            }
+        })
+    }
 }
 
 
@@ -143,5 +215,6 @@ module.exports={
     googleAuthSignIn,
     initiateGoogleLogin,
     handleGoogleCallback,
-    logout,
+    Googlelogout,
+    generateOTP,
 }
