@@ -209,6 +209,69 @@ const generateOTP=async(req,res)=>{
 }
 
 
+const verifyOTP=async(req,res,next)=>{
+    const {code}=req.query;
+    if(parseInt(code)===parseInt(req.app.locals.OTP)){
+        req.app.locals.OTP=null;
+        req.app.locals.resetSession=true;
+        res.status(200).send({message:"OTP verified"})
+    }
+    return next(createError(201,"Wrong OTP"))
+}
+
+
+const createResetSession=async(req,res,next)=>{
+    if(req.app.locals.resetSession){
+        req.app.locals.resetSession=false;
+        return res.status(200).send({message:"Access granted"})
+    }
+    return res.status(400).send({message:"Session expired!"})
+}
+
+
+const findUserByEmail=async(req,res,next)=>{
+    const {email}=req.query;
+    try{
+        const user=await UserModel.findOne({email:email});
+        if(user){
+            return res.status(200).send({message:"User found!"})
+        }else{
+            return res.status(202).send({message:"User not found!"})
+        }
+
+    }catch(err){
+        next(err)
+
+    }
+}
+
+const resetPassword=async(req,res,next)=>{
+    if(!req.app.locals.resetSession) return res.status(440).send({message:"Seesion expired"})
+    const {email,password}=req.body;
+try{
+    await UserModel.findOne({email}).then(user=>{
+        if(user){
+            const salt=bcrypt.genSaltSync(10);
+            const hashedpassword=bcrypt.hashSync(password,salt)
+            UserModel.findOne({email:email},{$set:{password:hashedpassword}}).then(()=>{
+                req.app.locals.resetSession=false;
+                return res.status(200).send({
+                    message:"Password reset Successful"
+                })
+            }).catch(err=>{
+                next(err)
+            })
+        }else{
+            return res.status(202).send({
+                message:"User not found!"
+            })
+        }
+    })
+
+}catch(err){
+    next(err)
+}
+}
 module.exports={
     signUp,
     signIn,
@@ -217,4 +280,8 @@ module.exports={
     handleGoogleCallback,
     Googlelogout,
     generateOTP,
+    createResetSession,
+    findUserByEmail,
+    verifyOTP,
+    resetPassword,
 }
