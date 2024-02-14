@@ -199,7 +199,7 @@ const transporter=nodemailer.createTransport({
     host:'smtp.gmail.com'
 })
 
-export const inviteTeamMember = async (req, res, next) => {
+const inviteTeamMember = async (req, res, next) => {
     //send mail using nodemailer
 
     const user = await UserModel.findById(req.user.id);

@@ -5,7 +5,7 @@ const cookieParser=require("cookie-parser")
 const cors=require("cors")
 const morgan=require("morgan")
 require("dotenv").config()
-const {connect}=require("./Database")
+const {connect}=require("./Database/dataConnect")
 const corsConfig={
     credentials:true,
     origin:true,

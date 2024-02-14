@@ -301,7 +301,7 @@ const getProjectMembers=async(req,res,next)=>{
 }
 
 //add works to project
-export const addWork = async (req, res, next) => {
+ const addWork = async (req, res, next) => {
     try {
     const user = await UserModel.findById(req.user.id);
     const project = await ProjectModel.findById(req.params.id);

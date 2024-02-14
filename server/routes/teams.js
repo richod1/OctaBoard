@@ -1,5 +1,5 @@
 const express=require("express")
-const router=expres.Router();
+const router=express.Router();
 const {verifyToken} =require("../middleware/verifyToken")
 const {localVariables}=require("../middleware/auth")
 const {
@@ -38,3 +38,4 @@ router.post("/invite/:id",verifyToken,localVariables,inviteTeamMember)
 
 router.get("/members/:id",verifyToken,getTeamMembers);
 
+module.exports=router;

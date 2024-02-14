@@ -32,7 +32,7 @@ const UserSchema=new mongoose.Schema({
         default:[],
     },
     teams:{
-        type:[mongoose.SChema.Types.ObjectId],
+        type:[mongoose.Schema.Types.ObjectId],
         ref:"Teams",
         default:[],
     },

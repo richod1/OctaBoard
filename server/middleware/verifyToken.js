@@ -17,7 +17,9 @@ const verifyToken=async(req,res,next)=>{
         res.status(402).json({err:err.message})
     }
 
-    module.exports={
-        verifyToken,
-    }
+    
+}
+
+module.exports={
+    verifyToken,
 }
