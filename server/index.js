@@ -16,7 +16,10 @@ app.use(express.json())
 app.use(morgan('tiny'))
 app.disable('x-powered-by')
 app.use(cookieParser())
-
+const AuthRoute=require("./routes/auth")
+const ProjectRoute=require("./routes/project")
+const TeamRoute=require("./routes/teams")
+const UserRoute=require("./routes/user")
 // database connection
 connect();
 
@@ -31,6 +34,10 @@ app.use((err,req,res,next)=>{
 })
 
 // routes usage here
+app.use("/api/auth",AuthRoute)
+app.use("/api/users",UserRoute)
+app.use("/api/project",ProjectRoute)
+app.use("/api/team",TeamRoute)
 
 app.listen(port,(err)=>{
     if(err) throw new Error("server is asleep");
