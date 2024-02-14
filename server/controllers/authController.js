@@ -284,4 +284,5 @@ module.exports={
     findUserByEmail,
     verifyOTP,
     resetPassword,
+    logout,
 }

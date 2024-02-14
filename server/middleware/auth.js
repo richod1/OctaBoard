@@ -1,4 +1,4 @@
-function localVaribles(req,res,next){
+function localVariables(req,res,next){
     res.app.locals={
         OTP:null,
         resetSession:false,
@@ -8,5 +8,5 @@ function localVaribles(req,res,next){
 }
 
 module.exports={
-    localVaribles
+    localVariables
 }
