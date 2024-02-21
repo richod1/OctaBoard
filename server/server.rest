@@ -1,0 +1,21 @@
+GET http://localhost:3000/
+
+######
+POST http://localhost:3000/api/auth/signup
+Content-Type: application/json
+
+{
+    "name":"frimp",
+    "email":"fun@gmail.com",
+    "password":"silverdollor_123",
+    "image":"default.png"
+}
+
+######
+POST http://localhost:3000/api/auth/signIn
+Content-Type: application/json
+
+{
+    "email":"fun@gmail.com",
+    "password":"silverdollor_123"
+}

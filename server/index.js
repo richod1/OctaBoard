@@ -33,6 +33,11 @@ app.use((err,req,res,next)=>{
     })
 })
 
+// test endpoint
+app.get("/",(req,res)=>{
+    res.send("Hello api")
+})
+
 // routes usage here
 app.use("/api/auth",AuthRoute)
 app.use("/api/users",UserRoute)

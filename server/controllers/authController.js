@@ -20,56 +20,65 @@ const transporter=nodemailer.createTransport({
     host:'smtp.gmail.com'
 })
 
-const signUp=async(req,res,next)=>{
-    const {email}=req.body;
-    if(!email){
-        return res.status(422).json({message:"Email ir required"})
-    }
-    try{
-        const existingUser=await UserModel.find({email}).exec();
-        if(existingUser){
-            return res.status(400).send({message:"Email already exist"})
+const signUp = async (req, res, next) => {
+    const {name,email,password} = req.body;
+    
+    try {
+        if(!name){
+            return res.status(422).json({message:"Name is required!"})
         }
-        const salt=bcrypt.genSaltSync(10);
-        const hashedPassword=bcrypt.hashSync(req.bocy.password,salt);
-        const newUser=new UserModel({...req.body,password:hashedPassword});
 
-        newUser.save().then((user)=>{
-            const token=jwt.sign({id:user._id},process.env.SECRET_KEY,{expiresIn:"10d"})
-            res.status(200).json({token,user})
-        }).catch((err)=>{
+        if(!password){
+            return res.status(422).json({message:"Password is required!"})
+        }
+        if (!email) return res.status(422).json({ message: "Email is required" });
+
+        const existingUser = await UserModel.findOne({ email }).exec();
+        if (existingUser) {
+            return res.status(400).send({ message: "Email already exists" });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hashedPassword = bcrypt.hashSync(password, salt);
+
+        const newUser = new UserModel({name, email, password: hashedPassword });
+
+        newUser.save().then((user) => {
+            const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "10d" });
+            res.status(200).json({ token, user });
+        }).catch((err) => {
             next(err);
-        })
-
-    }catch(err){
-        next(err)
+        });
+    } catch (err) {
+        next(err);
     }
 }
 
-const signIn=async(req,res,next)=>{
-    const {email}=req.body.email;
-    try{
-        const user=await UserModel.findOne({email});
-        if(!user){
-            return next(createError(404,"User not found!"))
-        }
-        if(user.googleSignIn){
-            return next(createError(201,"Entered Email is singned upn with google account.Please sign in with google"))
-        }
-        const validPassword=await bcrypt.compareSync(req.body.password,user.password);
-        if(!validPassword){
-            return next(createError(201,"Wrong password"));
+
+const signIn = async (req, res, next) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await UserModel.findOne({ email });
+        if (!user) {
+            return next(createError(404, "User not found!"));
         }
 
-// create token for user
-const token=jwt.sign({id:user._id},process.env.JWT_SECRET,{expiresIn:"10d"});
-res.status(200).json({token,user})
+        if (user.googleSignIn) {
+            return next(createError(201, "Entered email is signed up with a Google account. Please sign in with Google."));
+        }
 
-    }catch(err){
-    next(err);
+        const validPassword = bcrypt.compareSync(password, user.password);
+        if (!validPassword) {
+            return next(createError(201, "Wrong password"));
+        }
 
+        // Create token for user
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "10d" });
+        res.status(200).json({ token, user });
+    } catch (err) {
+        next(err);
     }
-
 }
 
 
